@@ -1,6 +1,8 @@
 {
   "name": "satania.tools.nailsetup.Editor",
   "references": [
+    "VRC.SDKBase",
+    "VRC.SDKBase.Editor",
     "satania.tools.nailsetup"
   ],
   "includePlatforms": [],

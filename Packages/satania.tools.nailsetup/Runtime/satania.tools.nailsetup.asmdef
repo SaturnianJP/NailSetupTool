@@ -1,6 +1,8 @@
 {
   "name": "satania.tools.nailsetup",
-  "references": [],
+  "references": [
+    "VRC.SDKBase"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

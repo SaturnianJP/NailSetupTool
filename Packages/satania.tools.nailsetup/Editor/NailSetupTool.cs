@@ -818,5 +818,4 @@ R_ThumbFinger
         #endregion
     }
 }
-
 #endif
