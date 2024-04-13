@@ -1,0 +1,15 @@
+{
+  "name": "satania.tools.nailsetup",
+  "displayName": "NailSetupTool",
+  "version": "0.0.3",
+  "description": "This tool is designed for attaching nails to an avatar.",
+  "gitDependencies": {},
+  "vpmDependencies": {},
+  "author": {
+    "name": "satania",
+    "email": "saturnianbooth@gmail.com"
+  },
+  "legacyFolders": {},
+  "legacyFiles": {},
+  "localPath": ""
+}

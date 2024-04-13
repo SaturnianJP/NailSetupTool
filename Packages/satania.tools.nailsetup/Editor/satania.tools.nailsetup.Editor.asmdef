@@ -1,0 +1,14 @@
+{
+  "name": "satania.tools.nailsetup.Editor",
+  "references": [
+    "satania.tools.nailsetup"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "autoReferenced": true,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "defineConstraints": [],
+  "optionalUnityReferences": []
+}
