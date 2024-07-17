@@ -1,16 +1,25 @@
 {
-  "name": "satania.tools.nailsetup.Editor",
-  "references": [
-    "VRC.SDKBase",
-    "VRC.SDKBase.Editor",
-    "satania.tools.nailsetup"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "autoReferenced": true,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "defineConstraints": [],
-  "optionalUnityReferences": []
+    "name": "satania.tools.nailsetup.Editor",
+    "rootNamespace": "",
+    "references": [
+        "VRC.SDKBase",
+        "VRC.SDKBase.Editor",
+        "satania.tools.nailsetup",
+        "nadena.dev.modular-avatar.core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "nadena.dev.modular-avatar",
+            "expression": "",
+            "define": "MA_VRCSDK3_AVATARS"
+        }
+    ],
+    "noEngineReferences": false
 }

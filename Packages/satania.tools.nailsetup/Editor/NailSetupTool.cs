@@ -5,6 +5,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
 
+#if MA_VRCSDK3_AVATARS
+using nadena.dev.modular_avatar.core;
+#endif
+
 //Copyright © 2024 さたにあしょっぴんぐ
 //Released under the MIT license
 //https://opensource.org/licenses/mit-license.php
@@ -35,7 +39,7 @@ namespace satania.shopping.tool
 
     public class NailSetupTool : EditorWindow
     {
-        #region Bone Database
+#region Bone Database
         string Hand_Regex = "hand|wrist|Hand";
         
         /*
@@ -141,13 +145,13 @@ thumb
 R_ThumbFinger
         */
         string Right_Thumb_Regex = "(?:R(?:ight_Hand_Thumb_|_ThumbFinger)|[Tt]humb)";
-        #endregion
+#endregion
 
-        #region Rect
+#region Rect
         private Rect titlePosition = new Rect(650 / 2　- (235 / 2), 6, 235, 235);
-        #endregion
+#endregion
 
-        #region Variables
+#region Variables
         /// <summary>
         /// ネイルをセットするアバターを選択
         /// </summary>
@@ -249,9 +253,9 @@ R_ThumbFinger
         private Transform[,] _meshNailObjects = new Transform[2, 5];
 
         Vector2 _nailScrollerPosition, _avatarBoneScrollPosition;
-        #endregion
+#endregion
 
-        #region ボーン
+#region ボーン
         /// <summary>
         /// ダミーボーンを使っているタイプのボーンを探す
         /// </summary>
@@ -405,9 +409,9 @@ R_ThumbFinger
                 }
             }
         }
-        #endregion
+#endregion
 
-        #region Gameobject
+#region Gameobject
         public static bool isPrefab(GameObject obj)
         {
             //プレハブのインスタンスなのかをチェック
@@ -460,9 +464,7 @@ R_ThumbFinger
 
         public GUIStyle GetTitleLabelStyle()
         {
-            var titleStyle = new GUIStyle();
-
-            titleStyle = new GUIStyle(GUI.skin.label);
+            var titleStyle = new GUIStyle(GUI.skin.label);
             titleStyle.alignment = TextAnchor.UpperCenter;
             titleStyle.fontStyle = FontStyle.Bold;
             titleStyle.fontSize = 30;
@@ -479,7 +481,7 @@ R_ThumbFinger
 
         private void DrawSkinnedNailField()
         {
-            #region ネイルを入れるフィールド
+#region ネイルを入れるフィールド
             EditorGUI.BeginChangeCheck();
             _nailTransform = EditorGUILayout.ObjectField("ネイル", _nailTransform, typeof(Transform), true) as Transform;
             if (EditorGUI.EndChangeCheck())
@@ -502,9 +504,9 @@ R_ThumbFinger
                     GetNailBones(_nailTransform);
                 }
             }
-            #endregion
+#endregion
 
-            #region ネイルのボーンを表示するフィールド
+#region ネイルのボーンを表示するフィールド
             using (new GUILayout.VerticalScope(GetButtonStyle()))
             {
                 isExtendNailField = EditorGUILayout.ToggleLeft("ネイルのボーン詳細設定", isExtendNailField);
@@ -545,7 +547,7 @@ R_ThumbFinger
                     GUILayout.EndScrollView();
                 }
             }
-            #endregion
+#endregion
         }
 
         private void DrawMeshNailField()
@@ -686,13 +688,123 @@ R_ThumbFinger
             return true;
         }
 
+#if MA_VRCSDK3_AVATARS
+        private void SetBoneProxy(GameObject go, Transform t)
+        {
+            ModularAvatarBoneProxy proxy = go.GetComponent<ModularAvatarBoneProxy>();
+            if (proxy == null)
+                proxy = go.AddComponent<ModularAvatarBoneProxy>();
+
+            proxy.attachmentMode = BoneProxyAttachmentMode.AsChildKeepWorldPose;
+            proxy.target = t;
+        }
+
+        private bool DoSkinnedNail_MA()
+        {
+            if (_nailTransform == null)
+            {
+                EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルオブジェクトがセットされてません！\nネイルのオブジェクトをツールに入れてからネイルをつけてください！", "OK");
+                return false;
+            }
+
+            if (_avatarAnimator == null)
+            {
+                EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけるアバターがセットされてません！\nアバターをツールに入れてからネイルをつけてください！", "OK");
+                return false;
+            }
+
+            //ネイルのオブジェクトをアバターの中に入れる
+            _nailTransform.SetParent(_avatarAnimator.transform);
+
+            //左手を入れる
+            if (_avatarHandTransforms[(int)eHand.Left] != null && _nailHandTransforms[(int)eHand.Left] != null)
+            {
+                var nail = _nailHandTransforms[(int)eHand.Left].gameObject;
+                var t = _avatarHandTransforms[(int)eHand.Left];
+
+                SetBoneProxy(nail, t);
+            }
+
+            //右手を入れる
+            if (_avatarHandTransforms[(int)eHand.Right] != null && _nailHandTransforms[(int)eHand.Right] != null)
+            {
+                var nail = _nailHandTransforms[(int)eHand.Right].gameObject;
+                var t = _avatarHandTransforms[(int)eHand.Right];
+
+                SetBoneProxy(nail, t);
+            }
+
+            //取得したネイルのボーンをアバターの指に入れる
+            for (int j = 0; j < 3; j++)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    if (_leftFingerTransforms[j, i] == null || _nailLeftTransforms[j, i] == null) continue;
+
+                    var nail = _nailLeftTransforms[j, i];
+                    SetBoneProxy(nail.gameObject, _leftFingerTransforms[j, i]);
+                }
+            }
+
+            for (int j = 0; j < 3; j++)
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    if (_rightFingerTransforms[j, i] == null || _nailRightTransforms[j, i] == null) continue;
+
+                    var nail = _nailRightTransforms[j, i];
+                    SetBoneProxy(nail.gameObject, _rightFingerTransforms[j, i]);
+                }
+            }
+
+            return true;
+        }
+
+        private bool DoMeshNail_MA()
+        {
+            if (_avatarAnimator == null)
+            {
+                EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけるアバターがセットされてません！\nアバターをツールに入れてからネイルをつけてください！", "OK");
+                return false;
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                if (_meshNailObjects[0, i] == null || _leftFingerTransforms[(int)eJoint.Distal, i] == null) continue;
+
+                if (!_meshNailObjects[0, i].IsChildOf(_avatarAnimator.transform))
+                    _meshNailObjects[0, i].SetParent(_avatarAnimator.transform);
+
+                var nail = _meshNailObjects[0, i].gameObject;
+                var t = _leftFingerTransforms[(int)eJoint.Distal, i];
+
+                SetBoneProxy(nail, t);
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                if (_meshNailObjects[1, i] == null || _rightFingerTransforms[(int)eJoint.Distal, i] == null) continue;
+
+                if (!_meshNailObjects[1, i].IsChildOf(_avatarAnimator.transform))
+                    _meshNailObjects[1, i].SetParent(_avatarAnimator.transform);
+
+                var nail = _meshNailObjects[1, i].gameObject;
+                var t = _rightFingerTransforms[(int)eJoint.Distal, i];
+
+                SetBoneProxy(nail, t);
+            }
+
+            return true;
+        }
+#endif
+
         private void OnGUI()
         {
-            #region タイトル
+#region タイトル
             GUI.Label(titlePosition, new GUIContent("Nail Setup Tool"), GetTitleLabelStyle());
-            #endregion
+#endregion
 
-            #region リンク
+#region リンク
             if (GUI.Button(new Rect(500, 2, 100, 43), "小物装着ツール"))
             {
                 var window = GetWindow<BoneParentTool>();
@@ -702,11 +814,11 @@ R_ThumbFinger
             }
 
             DrawLinkedButton(GetBoothLogo(), "https://saturnianshop.booth.pm/", new Rect(605, 2, 43, 43));
-            #endregion
+#endregion
 
             GUILayout.Space(90);
 
-            #region アバターを入れるフィールド
+#region アバターを入れるフィールド
             EditorGUI.BeginChangeCheck();
             _avatarAnimator = EditorGUILayout.ObjectField("アバター", _avatarAnimator, typeof(Animator), true) as Animator;
             if (EditorGUI.EndChangeCheck())
@@ -731,9 +843,9 @@ R_ThumbFinger
                     GetFingerBones(_avatarAnimator);
                 }
             }
-            #endregion
+#endregion
 
-            #region アバターのボーンを表示するフィールド
+#region アバターのボーンを表示するフィールド
             using (new GUILayout.VerticalScope(GetButtonStyle()))
             {
                 isExtendBoneField = EditorGUILayout.ToggleLeft("ボーン詳細設定", isExtendBoneField);
@@ -774,36 +886,62 @@ R_ThumbFinger
                     GUILayout.EndScrollView();
                 }
             }
-            #endregion
+#endregion
 
             GUILayout.Space(10);
 
             isSkinnedNail = EditorGUILayout.ToggleLeft("スキニング済みのネイル", isSkinnedNail);
 
-            #region ネイルのリストを表示するフィールド
+#region ネイルのリストを表示するフィールド
             if (isSkinnedNail)
                 DrawSkinnedNailField();
             else
                 DrawMeshNailField();
-            #endregion
+#endregion
 
             GUILayout.Space(10);
 
-            #region ネイルをつけるボタン
-            if (GUILayout.Button("ネイルをつける", GUILayout.Height(50)))
+#region ネイルをつけるボタン
+
+            using (new GUILayout.HorizontalScope())
             {
-                if (isSkinnedNail)
+                if (GUILayout.Button("ネイルをつける", GUILayout.Height(50)))
                 {
-                    if (DoSkinnedNail())
-                        EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけました！", "はい");
+                    if (isSkinnedNail)
+                    {
+                        if (DoSkinnedNail())
+                            EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけました！", "はい");
+                    }
+                    else
+                    {
+                        if (DoMeshNail())
+                            EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけました！", "はい");
+                    }
                 }
-                else
+
+#if MA_VRCSDK3_AVATARS
+                if (GUILayout.Button("MA Bone Proxyでつける", GUILayout.Height(50)))
                 {
-                    if (DoMeshNail())
-                        EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけました！", "はい");
+                    if (isSkinnedNail)
+                    {
+                        if (DoSkinnedNail_MA())
+                            EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけました！", "はい");
+                    }
+                    else
+                    {
+                        if (DoMeshNail_MA())
+                            EditorUtility.DisplayDialog("Nail Setup Tool", "ネイルをつけました！", "はい");
+                    }
                 }
+#endif
             }
             #endregion
+        }
+
+        private void OnEnable()
+        {
+            if (_avatarAnimator != null)
+                GetFingerBones(_avatarAnimator);
         }
         #endregion
 
@@ -815,7 +953,7 @@ R_ThumbFinger
             rect.width = EditorGUILayout.Slider(rect.width, min, max);
             rect.height = EditorGUILayout.Slider(rect.height, min, max);
         }
-        #endregion
+#endregion
     }
 }
 #endif
