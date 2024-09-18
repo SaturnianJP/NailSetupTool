@@ -5,7 +5,8 @@
   "description": "This tool is designed for attaching nails to an avatar.",
   "gitDependencies": {},
   "vpmDependencies": {
-    "com.vrchat.base": ">=3.5.2"
+    "com.vrchat.base": ">=3.5.2",
+    "com.vrchat.avatars": ">=3.5.2"
   },
   "author": {
     "name": "satania",
