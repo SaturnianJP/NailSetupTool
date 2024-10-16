@@ -7,7 +7,9 @@
         "satania.tools.nailsetup",
         "nadena.dev.modular-avatar.core"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

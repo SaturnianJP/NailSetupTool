@@ -52,7 +52,7 @@ namespace satania.shopping.tool
         [InspectorName("左手(LeftHand)/小指(Little)/第三関節(Distal)")] LeftLittleDistal = HumanBodyBones.LeftLittleDistal,
     }
 
-    public class BoneParentTool : EditorWindow
+    internal class BoneParentTool : EditorWindow
     {
         #region Rect
         private Rect titlePosition = new Rect(650 / 2 - (235 / 2), 6, 235, 235);
@@ -74,14 +74,16 @@ namespace satania.shopping.tool
         }
 
         #region GUI
+        GUIStyle titleStyle;
         public GUIStyle GetTitleLabelStyle()
         {
-            var titleStyle = new GUIStyle();
-
-            titleStyle = new GUIStyle(GUI.skin.label);
-            titleStyle.alignment = TextAnchor.UpperCenter;
-            titleStyle.fontStyle = FontStyle.Bold;
-            titleStyle.fontSize = 30;
+            if (titleStyle == null)
+            {
+                titleStyle = new GUIStyle(GUI.skin.label);
+                titleStyle.alignment = TextAnchor.UpperCenter;
+                titleStyle.fontStyle = FontStyle.Bold;
+                titleStyle.fontSize = 30;
+            }
 
             return titleStyle;
         }
@@ -98,11 +100,13 @@ namespace satania.shopping.tool
             _avatarAnimator = EditorGUILayout.ObjectField("アバター", _avatarAnimator, typeof(Animator), true) as Animator;
             if (EditorGUI.EndChangeCheck())
             {
-                if (!_avatarAnimator.isHuman)
+                if (_avatarAnimator != null)
                 {
-                    _avatarAnimator = null;
-                    return;
-                }    
+                    if (!_avatarAnimator.isHuman || !SceneUtils.IsSceneValidAndNotPreviewScene(_avatarAnimator.gameObject))
+                    {
+                        _avatarAnimator = null;
+                    }
+                }
             }
 
             GUILayout.Space(15);
@@ -119,7 +123,7 @@ namespace satania.shopping.tool
                     return;
 
                 Transform bone = _avatarAnimator.GetBoneTransform((HumanBodyBones)selectedBone);
-                if (bone == null) 
+                if (bone == null)
                     return;
 
                 targetObj.transform.SetParent(bone);
