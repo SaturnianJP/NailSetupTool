@@ -1,10 +1,9 @@
-﻿#if UNITY_EDITOR
-using System.IO;
+﻿using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Animations;
-using UnityEditor.SceneManagement;
+using System.Linq;
 
 #if MA_VRCSDK3_AVATARS
 using nadena.dev.modular_avatar.core;
@@ -148,11 +147,8 @@ R_ThumbFinger
         string Right_Thumb_Regex = "(?:R(?:ight_Hand_Thumb_|_ThumbFinger)|[Tt]humb)";
         #endregion
 
-        #region Rect
         private Rect titlePosition = new Rect(650 / 2 - (235 / 2), 6, 235, 235);
-        #endregion
-
-        #region Variables
+        private Vector2 _nailScrollerPosition, _avatarBoneScrollPosition;
         /// <summary>
         /// ネイルをセットするアバターを選択
         /// </summary>
@@ -162,9 +158,7 @@ R_ThumbFinger
         /// ボーンのフィールドを表示するか
         /// </summary>
         private bool isExtendBoneField = false;
-
         private bool isExtendNailField = false;
-
         private bool isSkinnedNail = true;
 
         /// <summary>
@@ -227,9 +221,7 @@ R_ThumbFinger
                 HumanBodyBones.RightThumbDistal
             }
         };
-
         private Texture _boothLogo;
-
         private readonly string[] _fingerTexts = new string[] { "人差し指", "小指", "中指", "薬指", "親指" };
 
         /// <summary>
@@ -253,8 +245,7 @@ R_ThumbFinger
 
         private Transform[,] _meshNailObjects = new Transform[2, 5];
 
-        Vector2 _nailScrollerPosition, _avatarBoneScrollPosition;
-        #endregion
+        private GUIStyle TitleStyle = null;
 
         #region ボーン
         /// <summary>
@@ -412,8 +403,7 @@ R_ThumbFinger
         }
         #endregion
 
-        #region Gameobject
-        public static bool isPrefab(GameObject obj)
+        public static bool IsPrefab(GameObject obj)
         {
             //プレハブのインスタンスなのかをチェック
             PrefabInstanceStatus status = PrefabUtility.GetPrefabInstanceStatus(obj);
@@ -425,7 +415,6 @@ R_ThumbFinger
                 || status == PrefabInstanceStatus.Disconnected;
 #endif
         }
-        #endregion
 
         #region GUI
         [MenuItem("さたにあしょっぴんぐ/ネイルセットアップツール/ネイルセットアップツール", priority = -10)]
@@ -470,19 +459,15 @@ R_ThumbFinger
 
         public GUIStyle GetTitleLabelStyle()
         {
-            var titleStyle = new GUIStyle(GUI.skin.label);
-            titleStyle.alignment = TextAnchor.UpperCenter;
-            titleStyle.fontStyle = FontStyle.Bold;
-            titleStyle.fontSize = 30;
+            if (TitleStyle == null)
+            {
+                TitleStyle = new GUIStyle(GUI.skin.label);
+                TitleStyle.alignment = TextAnchor.UpperCenter;
+                TitleStyle.fontStyle = FontStyle.Bold;
+                TitleStyle.fontSize = 30;
+            }
 
-            return titleStyle;
-        }
-
-        public GUIStyle GetButtonStyle()
-        {
-            var buttonStyle = new GUIStyle(GUI.skin.button);
-
-            return buttonStyle;
+            return TitleStyle;
         }
 
         private void DrawSkinnedNailField()
@@ -513,9 +498,10 @@ R_ThumbFinger
             #endregion
 
             #region ネイルのボーンを表示するフィールド
-            using (new GUILayout.VerticalScope(GetButtonStyle()))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                isExtendNailField = EditorGUILayout.ToggleLeft("ネイルのボーン詳細設定", isExtendNailField);
+                isExtendNailField = EditorGUILayout.Foldout(isExtendNailField, "ネイルのボーン詳細設定");
+                //isExtendNailField = EditorGUILayout.ToggleLeft("ネイルのボーン詳細設定", isExtendNailField);
 
                 if (isExtendNailField)
                 {
@@ -525,7 +511,7 @@ R_ThumbFinger
                     _nailHandTransforms[(int)eHand.Left] = EditorGUILayout.ObjectField("左手", _nailHandTransforms[(int)eHand.Left], typeof(Transform), true) as Transform;
                     for (int i = 0; i < 5; i++)
                     {
-                        using (new GUILayout.HorizontalScope(GUI.skin.button))
+                        using (new GUILayout.HorizontalScope("TE ElementBackground"))
                         {
                             GUILayout.Label($"{_fingerTexts[i]}", GUILayout.Width(90));
                             for (int j = 0; j < 3; j++)
@@ -555,7 +541,7 @@ R_ThumbFinger
                     _nailHandTransforms[(int)eHand.Right] = EditorGUILayout.ObjectField("右手", _nailHandTransforms[(int)eHand.Right], typeof(Transform), true) as Transform;
                     for (int i = 0; i < 5; i++)
                     {
-                        using (new GUILayout.HorizontalScope(GUI.skin.button))
+                        using (new GUILayout.HorizontalScope("TE ElementBackground"))
                         {
                             GUILayout.Label($"{_fingerTexts[i]}", GUILayout.Width(90));
                             for (int j = 0; j < 3; j++)
@@ -589,20 +575,21 @@ R_ThumbFinger
 
         private void DrawMeshNailField()
         {
-            using (new GUILayout.VerticalScope(GetButtonStyle()))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                isExtendNailField = EditorGUILayout.ToggleLeft("ネイルのボーン詳細設定", isExtendNailField);
+                isExtendNailField = EditorGUILayout.Foldout(isExtendNailField, "ネイルのボーン詳細設定");
+                //isExtendNailField = EditorGUILayout.ToggleLeft("ネイルのボーン詳細設定", isExtendNailField);
                 if (isExtendNailField)
                 {
                     using (new GUILayout.HorizontalScope())
                     {
                         //左手用フィールド
-                        using (new GUILayout.VerticalScope(GetButtonStyle()))
+                        using (new GUILayout.VerticalScope())
                         {
                             GUILayout.Label("左手");
                             for (int i = 0; i < 5; i++)
                             {
-                                using (new GUILayout.HorizontalScope(GetButtonStyle()))
+                                using (new GUILayout.HorizontalScope("TE ElementBackground"))
                                 {
                                     GUILayout.Label(_fingerTexts[i], GUILayout.Width(50));
 
@@ -630,12 +617,12 @@ R_ThumbFinger
                         }
 
                         //右手用フィールド
-                        using (new GUILayout.VerticalScope(GetButtonStyle()))
+                        using (new GUILayout.VerticalScope())
                         {
                             GUILayout.Label("右手");
                             for (int i = 0; i < 5; i++)
                             {
-                                using (new GUILayout.HorizontalScope(GetButtonStyle()))
+                                using (new GUILayout.HorizontalScope("TE ElementBackground"))
                                 {
                                     GUILayout.Label(_fingerTexts[i], GUILayout.Width(50));
 
@@ -689,7 +676,7 @@ R_ThumbFinger
             var copyNail = Instantiate(_nailTransform.gameObject);
             copyNail.gameObject.SetActive(false);
 
-            if (isPrefab(_nailTransform.gameObject))
+            if (IsPrefab(_nailTransform.gameObject))
                 PrefabUtility.UnpackPrefabInstance(_nailTransform.gameObject, PrefabUnpackMode.Completely, InteractionMode.UserAction);
 
             //ネイルのオブジェクトをアバターの中に入れる
@@ -745,7 +732,7 @@ R_ThumbFinger
             {
                 if (_meshNailObjects[0, i] == null || _leftFingerTransforms[(int)eJoint.Distal, i] == null) continue;
 
-                if (isPrefab(_meshNailObjects[0, i].transform.parent.gameObject))
+                if (IsPrefab(_meshNailObjects[0, i].transform.parent.gameObject))
                     PrefabUtility.UnpackPrefabInstance(_meshNailObjects[0, i].transform.parent.gameObject, PrefabUnpackMode.Completely, InteractionMode.UserAction);
 
                 _meshNailObjects[0, i].SetParent(_leftFingerTransforms[(int)eJoint.Distal, i]);
@@ -755,7 +742,7 @@ R_ThumbFinger
             {
                 if (_meshNailObjects[1, i] == null || _rightFingerTransforms[(int)eJoint.Distal, i] == null) continue;
 
-                if (isPrefab(_meshNailObjects[1, i].transform.parent.gameObject))
+                if (IsPrefab(_meshNailObjects[1, i].transform.parent.gameObject))
                     PrefabUtility.UnpackPrefabInstance(_meshNailObjects[1, i].transform.parent.gameObject, PrefabUnpackMode.Completely, InteractionMode.UserAction);
 
                 _meshNailObjects[1, i].SetParent(_rightFingerTransforms[(int)eJoint.Distal, i]);
@@ -876,9 +863,7 @@ R_ThumbFinger
 
         private void OnGUI()
         {
-            #region タイトル
             GUI.Label(titlePosition, new GUIContent("Nail Setup Tool"), GetTitleLabelStyle());
-            #endregion
 
             #region リンク
             if (GUI.Button(new Rect(500, 2, 100, 43), "小物装着ツール"))
@@ -922,9 +907,11 @@ R_ThumbFinger
             #endregion
 
             #region アバターのボーンを表示するフィールド
-            using (new GUILayout.VerticalScope(GetButtonStyle()))
+            using (new GUILayout.VerticalScope(GUI.skin.box))
             {
-                isExtendBoneField = EditorGUILayout.ToggleLeft("ボーン詳細設定", isExtendBoneField);
+                //FoldoutHeader
+                isExtendBoneField = EditorGUILayout.Foldout(isExtendBoneField, "ボーン詳細設定");
+                //isExtendBoneField = EditorGUILayout.ToggleLeft("ボーン詳細設定", isExtendBoneField);
 
                 if (isExtendBoneField)
                 {
@@ -934,9 +921,9 @@ R_ThumbFinger
                     _avatarHandTransforms[(int)eHand.Left] = EditorGUILayout.ObjectField("左手", _avatarHandTransforms[(int)eHand.Left], typeof(Transform), true) as Transform;
                     for (int i = 0; i < 5; i++)
                     {
-                        using (new GUILayout.HorizontalScope(GUI.skin.button))
+                        using (new GUILayout.HorizontalScope("TE ElementBackground"))
                         {
-                            GUILayout.Label($"{_fingerTexts[i]}", GUILayout.Width(90));
+                            EditorGUILayout.LabelField($"{_fingerTexts[i]}", GUILayout.Width(90));
                             for (int j = 0; j < 3; j++)
                             {
                                 EditorGUILayout.ObjectField(_leftFingerTransforms[j, i], typeof(Transform), true);
@@ -949,9 +936,9 @@ R_ThumbFinger
                     _avatarHandTransforms[(int)eHand.Right] = EditorGUILayout.ObjectField("右手", _avatarHandTransforms[(int)eHand.Right], typeof(Transform), true) as Transform;
                     for (int i = 0; i < 5; i++)
                     {
-                        using (new GUILayout.HorizontalScope(GUI.skin.button))
+                        using (new GUILayout.HorizontalScope("TE ElementBackground"))
                         {
-                            GUILayout.Label($"{_fingerTexts[i]}", GUILayout.Width(90));
+                            EditorGUILayout.LabelField($"{_fingerTexts[i]}", GUILayout.Width(90));
                             for (int j = 0; j < 3; j++)
                             {
                                 EditorGUILayout.ObjectField(_rightFingerTransforms[j, i], typeof(Transform), true);
@@ -1032,4 +1019,3 @@ R_ThumbFinger
         #endregion
     }
 }
-#endif
